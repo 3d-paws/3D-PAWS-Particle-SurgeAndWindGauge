@@ -11,7 +11,6 @@
 
 // Prototyping functions to aviod compile function unknown issue.
 bool Particle_Publish(); 
-bool OBS_Full();
 void OBS_Do();
 
 /* 

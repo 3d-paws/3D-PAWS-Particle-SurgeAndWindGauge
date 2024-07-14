@@ -529,10 +529,10 @@ void Wind_GustUpdate() {
 
 /*
  * ======================================================================================================================
- * Check_I2C_Sensors() - See if each I2C sensor responds on the bus and take action accordingly             
+ * I2C_Check_Sensors() - See if each I2C sensor responds on the bus and take action accordingly             
  * ======================================================================================================================
  */
-void Check_I2C_Sensors() {
+void I2C_Check_Sensors() {
 
   // BMX_1 Barometric Pressure 
   if (I2C_Device_Exist (BMX_ADDRESS_1)) {

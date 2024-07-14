@@ -4,8 +4,6 @@
  * ======================================================================================================================
  */
 
-bool Particle_Publish(); // Prototype this function to aviod compile function unknown issue.
-
 /*
  * ======================================================================================================================
  * StationMonitor() - On OLED display station information

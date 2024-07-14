@@ -526,7 +526,7 @@ void loop() {
 
       // See if Time to Make Observation
       if (OBS_TimeCheck()) {
-        Check_I2C_Sensors(); // Make sure Sensors are online
+        I2C_Check_Sensors(); // Make sure Sensors are online
         OBS_Do(); // If Particle connected we save OBS to N2S
 
         // Shutoff System Status Bits related to initialization after we have logged first observation 
