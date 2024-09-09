@@ -47,6 +47,9 @@ PRODUCT_VERSION(6);
  *                         Updated I2C_Check_Sensors()
  *          2024-06-23 RJB Added Copyright
  *          2024-07-11 RJB Broke code down to #include files
+ *          2024-07-23 RJB Bug 5MDIST cmd was setting od_adjustment to 8.
+ *                         Also set odg_adjustment after adding/removing 5MDIST.TXT file
+ *          2024-09-09 RJB Tweek Station Monitor added 5M 10M to output
  * 
  *  https://tidesandcurrents.noaa.gov/publications/CO-OPS_Measurement_Spec.pdf
  *  Air acoustic sensor mounted in protective well

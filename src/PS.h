@@ -72,12 +72,13 @@ int Function_DoAction(String s) {
 
   else if (strcmp (s,"10MDIST") == 0) { // Set 5M Distance Sensor State File
     Output("DoAction:10MDIST");
-    od_adjustment = 2.5;
+
     if (SD_exists) {
       if (SD.exists(SD_5M_DIST_FILE)) {
         Output ("5MDIST, EXISTS REMOVING"); 
         if (SD.remove (SD_5M_DIST_FILE)) {
           Output ("DEL 5M:OK, 10M SET");
+          od_adjustment = 2.5;
         }
         else {
           Output ("DEL 5M:ERR");
@@ -97,7 +98,6 @@ int Function_DoAction(String s) {
 
   else if (strcmp (s,"5MDIST") == 0) { // Set 5M Distance Sensor State File
     Output("DoAction:5MDIST");
-    od_adjustment = 1.25;
     if (SD_exists) {
       if (SD.exists(SD_5M_DIST_FILE)) {
         Output ("5MDIST, ALREADY EXISTS");      
@@ -107,7 +107,7 @@ int Function_DoAction(String s) {
         File fp = SD.open(SD_5M_DIST_FILE, FILE_WRITE);
         if (fp) {
           fp.close();
-          od_adjustment = 8;
+          od_adjustment = 1.25;
           Output ("5MDIST SET");
         }
         else {

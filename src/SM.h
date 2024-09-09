@@ -37,8 +37,9 @@ void StationMonitor() {
 
   float distance = OBS_Median_Distance() * od_adjustment; // Pins are 12bit resolution 
 
-  sprintf (msgbuf+strlen(msgbuf), "DM:%d.%02d DR:%d", 
-    (int)distance, (int)(distance*100)%100, (int) analogRead(DISTANCEGAUGE));
+  sprintf (msgbuf+strlen(msgbuf), "DM:%d.%02d DR:%d %s", 
+    (int)distance, (int)(distance*100)%100, (int) analogRead(DISTANCEGAUGE),
+    (od_adjustment == 1.25) ? "5M" : "10M");
 
   len = (strlen (msgbuf) > 21) ? 21 : strlen (msgbuf);
   for (c=0; c<=len; c++) oled_lines [1][c] = *(msgbuf+c);
