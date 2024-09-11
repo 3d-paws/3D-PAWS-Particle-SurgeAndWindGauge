@@ -1,6 +1,6 @@
 PRODUCT_VERSION(6);
 #define COPYRIGHT "Copyright [2024] [University Corporation for Atmospheric Research]"
-#define VERSION_INFO "SSAWG-20240711"
+#define VERSION_INFO "SSAWG-20240911"
 
 /*
  *======================================================================================================================
