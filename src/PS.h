@@ -411,6 +411,7 @@ void SimChangeCheck() {
           if (strcmp (id,"INTERNAL") == 0) {
             Cellular.setActiveSim(INTERNAL_SIM);
             Cellular.clearCredentials();
+            changed = true;
           }
           else if (strcmp (id,"APN") == 0) {
             apn = strtok_r(p, " ", &p);

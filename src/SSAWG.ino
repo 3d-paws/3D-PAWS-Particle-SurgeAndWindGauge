@@ -50,6 +50,10 @@ PRODUCT_VERSION(6);
  *          2024-07-23 RJB Bug 5MDIST cmd was setting od_adjustment to 8.
  *                         Also set odg_adjustment after adding/removing 5MDIST.TXT file
  *          2024-09-09 RJB Tweek Station Monitor added 5M 10M to output
+ *          2024-09-11 RJB Wind Initialization and Station Monitor changed to provide
+ *                         better output about wind speed and direction.
+ *                         When setting SIM to INTERNAL we now set changed = true to
+ *                         report success and reboot message.
  * 
  *  https://tidesandcurrents.noaa.gov/publications/CO-OPS_Measurement_Spec.pdf
  *  Air acoustic sensor mounted in protective well

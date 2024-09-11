@@ -51,11 +51,12 @@ void StationMonitor() {
   memset(msgbuf, 0, sizeof(msgbuf));
 
   if (AS5600_exists) {
-    sprintf (msgbuf+strlen(msgbuf), "WD:%3d WS:%02d", 
-      Wind_SampleDirection(), anemometer_interrupt_count);
+    float ws = Wind_SpeedAverage();
+    sprintf (msgbuf, "WD:%3d WS:%d.%02d", 
+      Wind_SampleDirection(), (int)ws, (int)(ws*100)%100);
   }
   else {
-    sprintf (msgbuf+strlen(msgbuf), "WD:NF  WS:NF");
+    sprintf (msgbuf, "WD:NF  WS:NF");
   }
   
   len = (strlen (msgbuf) > 21) ? 21 : strlen (msgbuf);

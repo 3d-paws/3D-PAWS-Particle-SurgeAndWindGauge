@@ -233,40 +233,6 @@ void Wind_TakeReading() {
 
 /* 
  *=======================================================================================================================
- * OBS_WindAndDistance_Fill()
- *=======================================================================================================================
- */
-void OBS_WindAndDistance_Fill() {
-  float distance;
-
-  Output("Wind&Distance Fill");
-
-  // Clear windspeed counter  
-  anemometer_interrupt_count = 0;
-  anemometer_interrupt_stime = System.millis();
-  
-  // Init default values.
-  wind.gust = 0.0;
-  wind.gust_direction = -1;
-  wind.bucket_idx = 0;
-
-  for (int i=0; i<OD_BUCKETS; i++) {
-    od_buckets[od_bucket] = OBS_Median_Distance();
-    distance = od_buckets[od_bucket] * od_adjustment; // Pins are 12bit resolution 
-
-    sprintf (Buffer32Bytes, "D:%d %d.%02d", i, (int)distance, (int)(distance*100)%100);
-    Output(Buffer32Bytes);
-
-    od_bucket = (++od_bucket) % OD_BUCKETS;
-
-    Wind_TakeReading();
-    HeartBeat();  // Provides a 250ms delay
-    delay (750);
-  }
-}
-
-/* 
- *=======================================================================================================================
  * OBS_Distance_Median() - return median from the last 91 observations
  *=======================================================================================================================
  */
@@ -524,6 +490,49 @@ void Wind_GustUpdate() {
   }
   else {
     wind.gust_direction = rtod;
+  }
+}
+
+/* 
+ *=======================================================================================================================
+ * OBS_WindAndDistance_Fill()
+ *=======================================================================================================================
+ */
+void OBS_WindAndDistance_Fill() {
+  float distance;
+
+  Output("Wind&Distance Fill");
+
+  // Clear windspeed counter  
+  anemometer_interrupt_count = 0;
+  anemometer_interrupt_stime = System.millis();
+  
+  // Init default values.
+  wind.gust = 0.0;
+  wind.gust_direction = -1;
+  wind.bucket_idx = 0;
+  
+  for (int i=0; i<OD_BUCKETS; i++) {
+    wind.bucket[i].direction = (int) -999;
+    wind.bucket[i].speed = 0.0;
+  }
+
+  for (int i=0; i<OD_BUCKETS; i++) {
+    od_buckets[od_bucket] = OBS_Median_Distance();
+    distance = od_buckets[od_bucket] * od_adjustment; // Pins are 12bit resolution 
+
+    sprintf (Buffer32Bytes, "%d D:%d.%02d", i, (int)distance, (int)(distance*100)%100);
+    if (AS5600_exists) {
+      Wind_TakeReading();
+      float ws = Wind_SpeedAverage();
+      sprintf (Buffer32Bytes+strlen(Buffer32Bytes), " WD:%3d WS:%d.%02d", 
+        Wind_SampleDirection(), (int)ws, (int)(ws*100)%100);
+    }
+    Output(Buffer32Bytes);
+    od_bucket = (++od_bucket) % OD_BUCKETS;
+
+    HeartBeat();  // Provides a 250ms delay
+    delay (740);  // Substract a little time from 750 for loop execution (This is a guess)
   }
 }
 
