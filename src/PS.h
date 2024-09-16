@@ -140,6 +140,7 @@ void WiFiChangeCheck() {
   int i=0;
   char *p, *auth, *ssid, *pw;
   char ch, buf[128];
+  bool changed = false;
 
   if (SD_exists) {
     // Test for file WIFI.TXT
@@ -155,7 +156,7 @@ void WiFiChangeCheck() {
         else {
           Output ("WIFI:Open");
           // Read one line from file
-          while (fp.available() && (i < 128 )) {
+          while (fp.available() && (i < 127 )) {
             ch = fp.read();
 
             // sprintf (msgbuf, "%02X : %c", ch, ch);
@@ -169,7 +170,6 @@ void WiFiChangeCheck() {
             }
           }
           fp.close();
-          Output ("WIFI:Close");
 
           // At this point we have encountered EOF, CR, or LF
           // Now we need to terminate array with a null to make it a string
@@ -185,18 +185,25 @@ void WiFiChangeCheck() {
           }
           else if ( (strcmp (auth, "WEP") != 0)  &&
                     (strcmp (auth, "WPA") != 0)  &&
-                    (strcmp (auth, "WPA2") != 0) ){
+                    (strcmp (auth, "WPA2") != 0) &&
+                    (strcmp (auth, "UNSEC") != 0)) {
             sprintf (msgbuf, "WIFI:ATYPE[%s] Err", auth);          
             Output(msgbuf);
           }
           else {
             ssid = strtok_r(p, ",", &p);
             pw  = strtok_r(p, ",", &p);
+            
+            if (pw == NULL) {
+              pw = (char *) "";  // Handle the case when nothing is after the ","
+            }
 
             if (ssid == NULL) {
               Output("WIFI:SSID=Null Err");
             }
-            else if (pw == NULL) {
+
+            // UNSEC is allow to have no password just a ssid
+            else if ((strcmp (auth, "UNSEC") != 0)  && (pw == NULL)) {
               Output("WIFI:PW=Null Err");
             }
             else {
@@ -212,8 +219,14 @@ void WiFiChangeCheck() {
               if (strcmp (auth, "UNSEC") == 0) {
                 Output("WIFI:Credentials Cleared");
                 WiFi.clearCredentials();
-                Output("WIFI:Credentials Set UNSEC");
-                WiFi.setCredentials(ssid, pw, UNSEC);
+                if (strcmp (pw, "") == 0) {
+                  Output("WIFI:Credentials Set UNSEC NO PW");
+                  WiFi.setCredentials(ssid);
+                }
+                else {
+                  Output("WIFI:Credentials Set UNSEC");
+                  WiFi.setCredentials(ssid, pw);                 
+                }
               }
               else if (strcmp (auth, "WEP") == 0) {
                 Output("WIFI:Credentials Cleared");
@@ -234,12 +247,16 @@ void WiFiChangeCheck() {
                 WiFi.setCredentials(ssid, pw, WPA2);
               }
               else if (strcmp (auth, "WPA_ENTERPRISE") == 0) {
+                // WPA Enterprise is only supported on the Photon and P1.
+                // It is not supported on the Argon, P2, and Photon 2.
                 Output("WIFI:Credentials Cleared");
                 WiFi.clearCredentials();
                 Output("WIFI:Credentials Set WPAE");
                 WiFi.setCredentials(ssid, pw, WPA_ENTERPRISE);
               }
               else if (strcmp (auth, "WPA2_ENTERPRISE") == 0) {
+                // WPA Enterprise is only supported on the Photon and P1.
+                // It is not supported on the Argon, P2, and Photon 2.
                 Output("WIFI:Credentials Cleared");
                 WiFi.clearCredentials();
                 Output("WIFI:Credentials Set WPAE2");

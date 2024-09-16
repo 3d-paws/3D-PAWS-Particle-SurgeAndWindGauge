@@ -54,6 +54,7 @@ PRODUCT_VERSION(6);
  *                         better output about wind speed and direction.
  *                         When setting SIM to INTERNAL we now set changed = true to
  *                         report success and reboot message.
+ *          2024-09-14 RJB Modified WiFi Support for UNSEC allowing no password Ex:  "UNSEC,ssid,"
  * 
  *  https://tidesandcurrents.noaa.gov/publications/CO-OPS_Measurement_Spec.pdf
  *  Air acoustic sensor mounted in protective well
@@ -161,7 +162,8 @@ PRODUCT_VERSION(6);
  * 
  * AuthType,ssid,password
  * 
- * Where AuthType is one of these keywords (WEP WPA WPA2)
+ * Where AuthType is one of these keywords (WEP WPA WPA2 UNSEC)
+ * Blank password is supported for UNSEC
  * ======================================================================================================================
  */
 
