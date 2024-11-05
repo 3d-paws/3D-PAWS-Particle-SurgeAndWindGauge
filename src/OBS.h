@@ -287,12 +287,16 @@ void OBS_Do() {
     if (BMX_1_exists) {
       writer.name("bp1").value(bmx1_pressure, 4);
       writer.name("bt1").value(bmx1_temp, 2);
-      writer.name("bh1").value(bmx1_humid, 2);
+      if (BMX_1_type == BMX_TYPE_BME280) {
+        writer.name("bh1").value(bmx1_humid, 2);
+      }
     }
     if (BMX_2_exists) {
       writer.name("bp2").value(bmx2_pressure, 4);
       writer.name("bt2").value(bmx2_temp, 2);
-      writer.name("bh2").value(bmx2_humid, 2);
+      if (BMX_2_type == BMX_TYPE_BME280) {
+        writer.name("bh2").value(bmx2_humid, 2);
+      }
     }
     if (HTU21DF_exists) {
       writer.name("ht1").value(htu1_temp, 2);

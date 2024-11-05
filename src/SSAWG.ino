@@ -55,6 +55,9 @@ PRODUCT_VERSION(6);
  *                         When setting SIM to INTERNAL we now set changed = true to
  *                         report success and reboot message.
  *          2024-09-14 RJB Modified WiFi Support for UNSEC allowing no password Ex:  "UNSEC,ssid,"
+ *          2024-11-05 RJB Discovered BMP390 first pressure reading is bad. Added read pressure to bmx_initialize()
+ *                         Bug fixes for 2nd BMP sensor in bmx_initialize() using first sensor data structure
+ *                         Now will only send humidity if bmx sensor supports it.
  * 
  *  https://tidesandcurrents.noaa.gov/publications/CO-OPS_Measurement_Spec.pdf
  *  Air acoustic sensor mounted in protective well
