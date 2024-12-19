@@ -1,6 +1,6 @@
-PRODUCT_VERSION(6);
+PRODUCT_VERSION(7);
 #define COPYRIGHT "Copyright [2024] [University Corporation for Atmospheric Research]"
-#define VERSION_INFO "SSAWG-20240911"
+#define VERSION_INFO "SSAWG-20241218"
 
 /*
  *======================================================================================================================
@@ -58,6 +58,8 @@ PRODUCT_VERSION(6);
  *          2024-11-05 RJB Discovered BMP390 first pressure reading is bad. Added read pressure to bmx_initialize()
  *                         Bug fixes for 2nd BMP sensor in bmx_initialize() using first sensor data structure
  *                         Now will only send humidity if bmx sensor supports it.
+ *          2024-12-18 RJB Compiled with deviceOS6.1.1
+ *          Version 7 Released on 2024-12-18
  * 
  *  https://tidesandcurrents.noaa.gov/publications/CO-OPS_Measurement_Spec.pdf
  *  Air acoustic sensor mounted in protective well
@@ -499,7 +501,7 @@ void setup() {
   else {
     Output ("DoAction:ERR");
   }
-
+  
   OBS_WindAndDistance_Fill();
 }
 

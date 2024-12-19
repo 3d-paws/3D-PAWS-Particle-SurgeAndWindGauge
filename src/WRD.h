@@ -6,7 +6,16 @@
 
 /*
  * =======================================================================================================================
- *  Distance Gauge
+ * Distance Gauge
+ *
+ * Distance Sensors
+ * The 5-meter sensors (MB7360, MB7369, MB7380, and MB7389) use a scale factor of (Vcc/5120) per 1-mm.
+ * Particle 12bit resolution (0-4095),  Sensor has a resolution of 0 - 5119mm,  Each unit of the 0-4095 resolution is 1.25mm
+ * Feather has 10bit resolution (0-1023), Sensor has a resolution of 0 - 5119mm, Each unit of the 0-1023 resolution is 5mm
+ * 
+ * The 10-meter sensors (MB7363, MB7366, MB7383, and MB7386) use a scale factor of (Vcc/10240) per 1-mm.
+ * Particle 12bit resolution (0-4095), Sensor has a resolution of 0 - 10239mm, Each unit of the 0-4095 resolution is 2.5mm
+ * Feather has 10bit resolution (0-1023), Sensor has a resolution of 0 - 10239mm, Each unit of the 0-1023 resolution is 10mm
  * =======================================================================================================================
  */
 #define DISTANCEGAUGE   A3
@@ -512,7 +521,7 @@ void OBS_WindAndDistance_Fill() {
   wind.gust_direction = -1;
   wind.bucket_idx = 0;
   
-  for (int i=0; i<OD_BUCKETS; i++) {
+  for (int i=0; i<WIND_READINGS; i++) {
     wind.bucket[i].direction = (int) -999;
     wind.bucket[i].speed = 0.0;
   }
