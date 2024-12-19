@@ -60,6 +60,7 @@ PRODUCT_VERSION(7);
  *                         Now will only send humidity if bmx sensor supports it.
  *          2024-12-18 RJB Compiled with deviceOS6.1.1
  *          Version 7 Released on 2024-12-18
+ *          2024-12-19 RJB Updated Adafruit_VEML7700 library to 2.1.6
  * 
  *  https://tidesandcurrents.noaa.gov/publications/CO-OPS_Measurement_Spec.pdf
  *  Air acoustic sensor mounted in protective well
@@ -501,7 +502,7 @@ void setup() {
   else {
     Output ("DoAction:ERR");
   }
-  
+
   OBS_WindAndDistance_Fill();
 }
 
