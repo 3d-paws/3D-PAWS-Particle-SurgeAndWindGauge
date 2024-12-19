@@ -89,13 +89,15 @@ bool Adafruit_VEML7700::begin(TwoWire *theWire) {
  */
 float Adafruit_VEML7700::readLux(luxMethod method) {
   bool wait = true;
-
-  if (method == VEML_LUX_NORMAL_NOWAIT || method == VEML_LUX_CORRECTED_NOWAIT)
-    wait = false;
-
   switch (method) {
+  case VEML_LUX_NORMAL_NOWAIT:
+    wait = false;
+    VEML7700_FALLTHROUGH
   case VEML_LUX_NORMAL:
     return computeLux(readALS(wait));
+  case VEML_LUX_CORRECTED_NOWAIT:
+    wait = false;
+    VEML7700_FALLTHROUGH
   case VEML_LUX_CORRECTED:
     return computeLux(readALS(wait), true);
   case VEML_LUX_AUTO:
@@ -173,8 +175,8 @@ bool Adafruit_VEML7700::interruptEnabled(void) {
 }
 
 /*!
- *    @brief Set the ALS IRQ persistance setting
- *    @param pers Persistance constant, can be VEML7700_PERS_1, VEML7700_PERS_2,
+ *    @brief Set the ALS IRQ persistence setting
+ *    @param pers Persistence constant, can be VEML7700_PERS_1, VEML7700_PERS_2,
  *    VEML7700_PERS_4 or VEML7700_PERS_8
  */
 void Adafruit_VEML7700::setPersistence(uint8_t pers) {
@@ -182,8 +184,8 @@ void Adafruit_VEML7700::setPersistence(uint8_t pers) {
 }
 
 /*!
- *    @brief Get the ALS IRQ persistance setting
- *    @returns Persistance constant, can be VEML7700_PERS_1, VEML7700_PERS_2,
+ *    @brief Get the ALS IRQ persistence setting
+ *    @returns Persistence constant, can be VEML7700_PERS_1, VEML7700_PERS_2,
  *    VEML7700_PERS_4 or VEML7700_PERS_8
  */
 uint8_t Adafruit_VEML7700::getPersistence(void) {
