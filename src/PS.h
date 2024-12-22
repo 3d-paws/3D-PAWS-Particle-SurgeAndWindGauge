@@ -70,6 +70,12 @@ int Function_DoAction(String s) {
     return(0);  
   }
 
+  else if (strcmp (s,"INFO") == 0) {  // Send System Information
+    Output("DoAction:INFO");
+    SendSystemInformation=true;
+    return(0);  
+  }
+
   else if (strcmp (s,"10MDIST") == 0) { // Set 5M Distance Sensor State File
     Output("DoAction:10MDIST");
 
@@ -551,23 +557,3 @@ void SimChangeCheck() {
   } // Console and SD enabled
 }
 #endif
-
-/*
- * ======================================================================================================================
- * firmwareUpdateHandler() - The firmware update handler sets a global variable when the firmware update starts, 
- *                           so we can defer sleep until it completes (or times out)
- * 
- * SEE https://docs.particle.io/reference/device-os/api/system-events/system-events-reference/#cloud_status-64-parameter-values
- * ======================================================================================================================
- */
-void firmwareUpdateHandler(system_event_t event, int param) {
-    switch(param) {
-        case 0:  // firmware_update_begin:
-            firmwareUpdateInProgress = true;
-            break;
-        case 1:  // firmware_update_complete:
-        case -1: // firmware_update_failed:
-            firmwareUpdateInProgress = false;
-            break;
-    }
-}

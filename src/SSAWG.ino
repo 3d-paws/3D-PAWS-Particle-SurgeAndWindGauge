@@ -1,6 +1,6 @@
-PRODUCT_VERSION(7);
+PRODUCT_VERSION(8);
 #define COPYRIGHT "Copyright [2024] [University Corporation for Atmospheric Research]"
-#define VERSION_INFO "SSAWG-20241218"
+#define VERSION_INFO "SSAWG-20241222v8"
 
 /*
  *======================================================================================================================
@@ -31,20 +31,22 @@ PRODUCT_VERSION(7);
  *                         Added MCP and SHT sensor support
  *          2023-08-28 RJB Bug Fix was sending sht for mcp reading
  *          2023-09-12 RJB Hardened Time handeling
- *          2024-02-23 RJB Version 5 At boot look for a file "5MDIST.TXT" on the SD.  
+ * 
+ *          Version 5 Released on 2024-05-21
+ *          2024-02-23 RJB At boot look for a file "5MDIST.TXT" on the SD.  
  *                         If file exists then we multiply by 1.25. If no file, then we multiply by 2.5 for the 10m Sensor. 
  *                         Particle console will support 3 DoAction commands, "REBOOT", "10MDIST", "5MDIST". 
- *          2024-04-30 RJB Version 6 
- *                         Added Argon support
+ *          2024-04-30 RJB Added Argon support
  *                         Added 22hr reboot
  *                         Added 3rd party sim support
  *                         Moved SCE Pin from A4 to D8
  *                         Improved Station Monitor output
- *          2024-05-20 RJB Version 6 Cont.
- *                         Improved Station Monitor output
+ *          2024-05-20 RJB Improved Station Monitor output
  *                         Dynamic display support added.
  *                         SHT, HIH, LUX, SI1145 sensor support added 
  *                         Updated I2C_Check_Sensors()
+ * 
+ *          Version 7 Released on 2024-12-18
  *          2024-06-23 RJB Added Copyright
  *          2024-07-11 RJB Broke code down to #include files
  *          2024-07-23 RJB Bug 5MDIST cmd was setting od_adjustment to 8.
@@ -59,9 +61,17 @@ PRODUCT_VERSION(7);
  *                         Bug fixes for 2nd BMP sensor in bmx_initialize() using first sensor data structure
  *                         Now will only send humidity if bmx sensor supports it.
  *          2024-12-18 RJB Compiled with deviceOS6.1.1
- *          Version 7 Released on 2024-12-18
- *          2024-12-19 RJB Updated Adafruit_VEML7700 library to 2.1.6
  * 
+ *          Version 8 Released on 2024-12-22
+ *          2024-12-19 RJB Updated Adafruit_VEML7700 library to 2.1.6
+ *          2024-12-22 RJB Added INFO support feature
+ *                         Removed unnecessary globals and functions not used
+ *                            bool ParticleConnecting = false; 
+ *                            int StartedConnecting = 0;
+ *                            bool PostedResults;
+ *                            bool firmwareUpdateInProgress = false;
+ *                            firmwareUpdateHandler()
+ *          
  *  https://tidesandcurrents.noaa.gov/publications/CO-OPS_Measurement_Spec.pdf
  *  Air acoustic sensor mounted in protective well
  *   181 one-second water level samples centered on each tenth of an hour are averaged, a three standard deviation 
@@ -249,20 +259,18 @@ char *msgp;                   // Pointer to message text
 char Buffer32Bytes[32];       // General storage
 
 int  LED_PIN = D7;            // Built in LED
-bool PostedResults;           // How we did in posting Observation and Need to Send Observations
 
 uint64_t lastOBS = 0;         // time of next observation
 int countdown = 1800;         // Exit calibration mode when reaches 0 - protects against burnt out pin or forgotten jumper
 
 uint64_t LastTimeUpdate = 0;
-uint64_t StartedConnecting = 0;
-bool ParticleConnecting = false;
 
 int  cf_reboot_countdown_timer = 79200; // There is overhead transmitting data so take off 2 hours from 86400s
                                         // Set to 0 to disable feature
 int DailyRebootCountDownTimer;
 
-bool firmwareUpdateInProgress = false;
+bool SendSystemInformation = true; // Send System Information to Particle Cloud. True means we will send at boot.
+
 
 #if PLATFORM_ID == PLATFORM_BORON
 /*
@@ -305,6 +313,8 @@ char SD_simold_file[] = "SIMOLD.TXT";   // SIM.TXT renamed to this after sim con
 
 char SD_wifi_file[] = "WIFI.TXT";         // File used to set WiFi configuration
 
+char SD_INFO_FILE[] = "INFO.TXT";       // Store INFO information in this file. Every INFO call will overwrite content
+
 /*
  * ======================================================================================================================
  * HeartBeat() - Burns 250 ms 
@@ -333,6 +343,7 @@ void HeartBeat() {
 #include "OBS.h"                  // Do Observation Processing
 #include "SM.h"                   // Station Monitor
 #include "PS.h"                   // Particle Support Functions
+#include "INFO.h"                 // Station Fonformation
 
 /*
  * ======================================================================================================================
@@ -398,12 +409,6 @@ void setup() {
   Serial_write(COPYRIGHT);
   Output (VERSION_INFO); // Doing it one more time for the OLED
   delay(4000);
-
-  // The System.on() function is used to subscribe to system-level events and configure 
-  // how the device should behave when these events occur.
-  // Firmware update handler sets a global variable when the firmware update starts.
-  // We do not want to go into low power mode during this update
-  // System.on(firmware_update, firmwareUpdateHandler);
 
   // Set Daily Reboot Timer
   DailyRebootCountDownTimer = cf_reboot_countdown_timer;  
@@ -539,6 +544,10 @@ void loop() {
         EEPROM_Initialize();
       }
 
+      if (SendSystemInformation && Particle.connected()) {
+        INFO_Do(); // Function sets SendSystemInformation back to false.
+      }
+
       // See if Time to Make Observation
       if (OBS_TimeCheck()) {
         I2C_Check_Sensors(); // Make sure Sensors are online
@@ -624,6 +633,10 @@ void loop() {
     // We are on battery and have 10% or less percent left then turnoff and wait for power to return
     if (!pmic.isPowerGood() && (System.batteryCharge() <= 10.0)) {
 
+      if (Particle.connected()) {
+        INFO_Do(); // Function sets SendSystemInformation back to false.
+      }
+      
       Output("Low Power!");
 
       // Disconnect from the cloud and power down the modem.

@@ -10,7 +10,7 @@
 #define LINE_MAX_LENGTH   VALUE_MAX_LENGTH+KEY_MAX_LENGTH+3   // =, CR, LF 
 
 // Prototyping functions to aviod compile function unknown issue.
-bool Particle_Publish(); 
+bool Particle_Publish(char *EventName); 
 void OBS_Do();
 
 /* 
@@ -188,7 +188,7 @@ void SD_N2S_Publish() {
 
           if (ch == 0x0A) {  // newline
 
-            if (Particle_Publish()) {
+            if (Particle_Publish((char *) "SS")) {
               sprintf (Buffer32Bytes, "N2S[%d]->PUB:OK", sent++);
               Output (Buffer32Bytes);
               Serial_write (msgbuf);
@@ -210,7 +210,7 @@ void SD_N2S_Publish() {
                 delay (750); 
               }
 
-              if (Particle_Publish()) {
+              if (Particle_Publish((char *) "SS")) {
                 sprintf (Buffer32Bytes, "N2S[%d]->PUB:OK", sent++);
                 Output (Buffer32Bytes);
                 // setup for next line in file

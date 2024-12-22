@@ -47,6 +47,7 @@ bool BMX_1_exists = false;
 bool BMX_2_exists = false;
 byte BMX_1_type=BMX_TYPE_UNKNOWN;
 byte BMX_2_type=BMX_TYPE_UNKNOWN;
+const char *bmxtype[] = {"UNKN", "BMP280", "BME280", "BMP388", "BMP390"};
 
 /*
  * ======================================================================================================================

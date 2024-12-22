@@ -9,7 +9,7 @@
  * Particle_Publish() - Publish to Particle what is in msgbuf
  * ======================================================================================================================
  */
-bool Particle_Publish() {
+bool Particle_Publish(char *EventName) {
   // Calling Particle.publish() when the cloud connection has been turned off will not publish an event. 
   // This is indicated by the return success code of false. If the cloud connection is turned on and 
   // trying to connect to the cloud unsuccessfully, Particle.publish() may block for up to 20 seconds 
@@ -17,7 +17,7 @@ bool Particle_Publish() {
   // before calling Particle.publish() can help prevent this.
   //   if (Cellular.ready() && Particle.connected()) {
   if (Particle.connected()) {
-    if (Particle.publish("SS", msgbuf, WITH_ACK)) {  // PRIVATE flag is always used even when not specified
+    if (Particle.publish(EventName, msgbuf, WITH_ACK)) {  // PRIVATE flag is always used even when not specified
       // Currently, a device can publish at rate of about 1 event/sec, with bursts of up to 4 allowed in 1 second. 
       delay (1000);
       return(true);
@@ -343,8 +343,7 @@ void OBS_Do() {
   lastOBS = System.millis();
 
   Output ("Publish(SS)");
-  if (Particle_Publish()) {
-    PostedResults = true;
+  if (Particle_Publish((char *) "SS")) {
 
     if (SD_exists) {
       Output ("Publish(OK)");
@@ -357,8 +356,6 @@ void OBS_Do() {
     SD_N2S_Publish();
   }
   else {
-    PostedResults = false;
-
     Output ("Publish(FAILED)");
     
     // Set the bit so when we finally transmit the observation,
