@@ -1,6 +1,6 @@
-PRODUCT_VERSION(8);
-#define COPYRIGHT "Copyright [2024] [University Corporation for Atmospheric Research]"
-#define VERSION_INFO "SSAWG-20241222v8"
+PRODUCT_VERSION(9);
+#define COPYRIGHT "Copyright [2025] [University Corporation for Atmospheric Research]"
+#define VERSION_INFO "SSAWG-20251112v9"
 
 /*
  *======================================================================================================================
@@ -71,7 +71,11 @@ PRODUCT_VERSION(8);
  *                            bool PostedResults;
  *                            bool firmwareUpdateInProgress = false;
  *                            firmwareUpdateHandler()
- *          
+ *          Version 9 Released on 2025-11-12
+ *          2025-04-08 RJB Removed the check for serial console in SimChangeCheck()
+ *          2025-11-12 RJB Bug Fix SHT temp was being reported as humidity
+ *                         Updated the OS to 6.3.3
+ * 
  *  https://tidesandcurrents.noaa.gov/publications/CO-OPS_Measurement_Spec.pdf
  *  Air acoustic sensor mounted in protective well
  *   181 one-second water level samples centered on each tenth of an hour are averaged, a three standard deviation 

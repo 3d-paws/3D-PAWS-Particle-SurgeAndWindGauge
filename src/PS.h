@@ -384,7 +384,7 @@ void SimChangeCheck() {
     Output (msgbuf);
   }
 
-  if (SerialConsoleEnabled && SD_exists) {
+  if (SD_exists) {
     // Test for file SIM.TXT
     if (SD.exists(SD_sim_file)) {
       fp = SD.open(SD_sim_file, FILE_READ); // Open the file for reading, starting at the beginning of the file.

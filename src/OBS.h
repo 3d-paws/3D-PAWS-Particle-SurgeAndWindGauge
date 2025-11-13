@@ -310,11 +310,11 @@ void OBS_Do() {
     }
     if (SHT_1_exists) {
       writer.name("st1").value(st1, 2);
-      writer.name("sh1").value(st1, 2);
+      writer.name("sh1").value(sh1, 2);
     }
     if (SHT_2_exists) {
       writer.name("st2").value(st2, 2);
-      writer.name("sh2").value(st2, 2);
+      writer.name("sh2").value(sh2, 2);
     }
     if (HIH8_exists) {
       writer.name("ht2").value(ht2, 2);
