@@ -4,7 +4,7 @@ This is a fork of JeeLab's fantastic real time clock library for Arduino.
 
 Works great with Adafruit RTC breakouts:
 
-- [DS3231 Precision RTC](https://www.adafruit.com/product/3013)
+- [DS3231 Precision RTC](https://www.adafruit.com/product/3013) (breakout) and [Stemma QT version](https://www.adafruit.com/product/5188)
 - [PCF8523 RTC](https://www.adafruit.com/product/3295)
 - [DS1307 RTC](https://www.adafruit.com/product/3296)
 
@@ -44,7 +44,7 @@ STM32F2            |             |             |     X       |
 Adafruit invests time and resources providing this open source code, please support Adafruit and open-source hardware by purchasing products from Adafruit!
 
 # Dependencies
- * [TinyWireM](https://github.com/adafruit/TinyWireM)
+ * [Adafruit BusIO](https://github.com/adafruit/Adafruit_BusIO)
 
 # Contributing
 
@@ -65,8 +65,10 @@ https://learn.adafruit.com/the-well-automated-arduino-library/doxygen-tips
 The code should be formatted according to the [LLVM Coding Standards](https://llvm.org/docs/CodingStandards.html), which is the default of the clang-format tool.  The easiest way to ensure conformance is to [install clang-format](https://llvm.org/builds/) and run
 
 ```shell
-clang-format -i <source_file>`
+clang-format -i <source_file>
 ```
+
+See [Formatting with clang-format](https://learn.adafruit.com/the-well-automated-arduino-library/formatting-with-clang-format) for details.
 
 Written by JeeLabs
 MIT license, check license.txt for more information

@@ -43,8 +43,8 @@
 #define SHT31_HEATERDIS 0x3066    /**< Heater Disable */
 #define SHT31_REG_HEATER_BIT 0x0d /**< Status Register Heater Bit */
 
-// ICDP Removed for Particle 
-// extern TwoWire Wire; /**< Forward declarations of Wire for board/variant combinations that don't have a default 'Wire' */
+// ICDP Removed for Particle
+//extern TwoWire Wire; /**< Forward declarations of Wire for board/variant combinations that don't have a default 'Wire' */
 
 /**
  * Driver for the Adafruit SHT31-D Temperature and Humidity breakout board.
@@ -57,7 +57,7 @@ public:
   bool begin(uint8_t i2caddr = SHT31_DEFAULT_ADDR);
   float readTemperature(void);
   float readHumidity(void);
-  void readBoth(float *temperature_out, float *humidity_out);
+  bool readBoth(float *temperature_out, float *humidity_out);
   uint16_t readStatus(void);
   void reset(void);
   void heater(bool h);

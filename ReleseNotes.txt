@@ -1,0 +1,54 @@
+=================================================================================================================
+ReleseNotes.txt
+=================================================================================================================
+
+=================================================================================================================
+Version 10
+=================================================================================================================
+Library Update Notes
+
+Used Arduino to pull down the libraries
+Renamed the folders removing _Library 
+Created src directory under each
+Moved .h .c and .cpp to src directory
+Made changes as needed. See below.
+
+Cleared out prior compiles 
+  rm -rf ~/.particle/toolchains/deviceOS/6.3.3/build/target/user/platform-13-m/3D-PAWS-Particle-SurgeAndWindGauge
+  rm -rf ~/Documents/Particle/3D-PAWS-Particle-SurgeAndWindGauge/target/6.3.3
+
+Updated the project.properties in the main folder
+
+==============================================================================================
+Adafruit_BME280/library.properties:version=2.1.4     2.3.0
+Adafruit_BMP280/library.properties:version=2.3.0     2.6.8
+Adafruit_BMP3XX/library.properties:version=2.1.1     2.1.6
+Adafruit_BusIO/library.properties:version=1.8.2      1.17.3
+Adafruit_GFX/library.properties:version=1.10.10      1.12.4
+
+Adafruit_Sensor/library.properties:version=1.1.4     1.11.5    Adafruit Unified Sensor
+  vi Adafruit_Sensor.cpp. added #ifdef NOWAY around the function in the .cpp
+
+Adafruit_HTU21DF/library.properties:version=1.1.0    1.1.2
+Adafruit_MCP9808/library.properties:version=2.0.0    2.0.2
+
+Adafruit_SHT31/library.properties:version=2.2.0      2.2.2
+  cp Adafruit_SHT31.h Adafruit_SHT31.h-org
+  < // ICDP Removed for Particle
+  < // extern TwoWire Wire; /**< Forward declarations of Wire for board/variant combinations that don't have a default 'Wire' */
+  ---
+  > extern TwoWire Wire; /**< Forward declarations of Wire for board/variant
+  >                         combinations that don't have a default 'Wire' */
+
+Adafruit_SI1145/library.properties:version=1.1.1     1.2.2
+Adafruit_SSD1306/library.properties:version=2.4.6    2.5.15
+Adafruit_VEML7700/library.properties:version=2.1.2   2.1.6
+
+RTClib/library.properties:version=1.13.0             2.1.4
+ add #define PCF8523_ADDRESS 0x68       // I2C address for PCF8523   in time.h
+
+SdFat/library.properties:version=1.0.16              2.3.0
+
+
+
+
