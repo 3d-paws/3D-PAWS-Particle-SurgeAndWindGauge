@@ -23,7 +23,10 @@ extern char SD_simold_file[];
 extern char SD_wifi_file[];
 extern char SD_INFO_FILE[];
 extern char SD_5M_DIST_FILE[];
+extern char SD_NOWIND_FILE[];
 extern char SD_ELEV_FILE[];
+extern char SD_OP2_RAW_FILE[];
+extern char SD_OP2_VBV_FILE[];
 
 // Function prototypes
 void SD_initialize();

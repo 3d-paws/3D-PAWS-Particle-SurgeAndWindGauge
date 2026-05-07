@@ -88,27 +88,6 @@ extern bool MCP_2_exists;
 
 /*
  * ======================================================================================================================
- *  SHTX - I2C - Temperature & Humidity sensor (SHT31)  - Note the SHT40, SHT45 use same i2c address
- * ======================================================================================================================
- */
-#define SHT_ADDRESS_1     0x44
-#define SHT_ADDRESS_2     0x45        // ADR pin set high, VDD
-
-extern Adafruit_SHT31 sht1;
-extern Adafruit_SHT31 sht2;
-extern bool SHT_1_exists;
-extern bool SHT_2_exists;
-
-/*
- * ======================================================================================================================
- *  HIH8 - I2C - Temperature & Humidity sensor (HIH8000)  - 
- * ======================================================================================================================
- */
-#define HIH8000_ADDRESS   0x27
-extern bool HIH8_exists;
-
-/*
- * ======================================================================================================================
  *  Si1145 - I2C - UV/IR/Visible Light Sensor
  *  The SI1145 has a fixed I2C address (0x60), you can only connect one sensor per microcontroller!
  * ======================================================================================================================
@@ -145,11 +124,10 @@ extern bool MSLP_exists;
 // Function prototype
 byte get_Bosch_ChipID (byte address);
 void bmx_initialize();
+void bmx1_read(float &p, float &t, float &h);
+void bmx2_read(float &p, float &t, float &h);
 void htu21d_initialize();
 void mcp9808_initialize();
-void sht_initialize();
-void hih8_initialize();
-bool hih8_getTempHumid(float *t, float *h);
 void si1145_initialize();
 void vlx_initialize();
 void hi_initialize();

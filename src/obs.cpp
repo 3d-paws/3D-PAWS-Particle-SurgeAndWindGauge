@@ -8,6 +8,7 @@
 
 #include "include/qc.h"
 #include "include/ssbits.h"
+#include "include/sensors_i2c_44_47.h"
 #include "include/sensors.h"
 #include "include/eeprom.h"
 #include "include/wrda.h"
@@ -18,6 +19,19 @@
 #include "include/time.h"
 #include "include/main.h"
 #include "include/obs.h"
+
+/*
+ * ======================================================================================================================
+ * Variables and Data Structures
+ * =======================================================================================================================
+ */
+float bmx_1_pressure = 0.0;
+
+/*
+ * ======================================================================================================================
+ * Fuction Definations
+ * =======================================================================================================================
+ */
 
 /*
  * ======================================================================================================================
@@ -60,18 +74,11 @@ void OBS_Do() {
   float htu1_humid = 0.0;
   float mcp1_temp = 0.0;
   float mcp2_temp = 0.0;
-  float st1 = 0.0;
-  float sh1 = 0.0;
-  float st2 = 0.0;
-  float sh2 = 0.0;
-  float ht2 = 0.0; // HIH8
-  float hh2 = 0.0; // HIH8
   float lux = 0.0;
   float si_vis = 0.0;
   float si_ir = 0.0;
   float si_uv = 0.0;
   float heat_index = 0.0;
-  float mslp = QC_ERR_P;
  
   float distance;
   float distance_stdev;
@@ -87,11 +94,18 @@ void OBS_Do() {
     Output ("OBS_Do: Time NV");
     return;
   }
+  else {
+    stc_timestamp();
+    sprintf (msgbuf, "OBS_Do(%s)", timestamp);
+    Output(msgbuf);
+  }
 
-  float wlm = OBS_Distance_Median();
+  float wlm = DistanceGauge_Median();
   int   wlr = analogRead(DISTANCEGAUGE) * (float) dg_adjustment; // Water Level Raw Reading
 
-  if (AS5600_exists) {
+  DistanceGauge_Calc(&distance, &distance_stdev, &distance_outliers);
+
+  if (DoWind) {
     Wind_GustUpdate(); // Update Gust and Gust Direction readings
     ws = Wind_SpeedAverage();
     ws = (isnan(ws) || (ws < QC_MIN_WS) || (ws > QC_MAX_WS)) ? QC_ERR_WS : ws;
@@ -106,66 +120,13 @@ void OBS_Do() {
     wgd = (isnan(wgd) || (wgd < QC_MIN_WD) || (wgd > QC_MAX_WD)) ? QC_ERR_WD : wgd;
   }
 
-  // Take multiple readings and return the median
-  OBS_Distance_Calc(&distance, &distance_stdev, &distance_outliers);
-
   // Adafruit I2C Sensors
   if (BMX_1_exists) {
-    float p = 0.0;
-    float t = 0.0;
-    float h = 0.0;
-
-    if (BMX_1_chip_id == BMP280_CHIP_ID) {
-      p = bmp1.readPressure()/100.0F;       // bp1 hPa
-      t = bmp1.readTemperature();           // bt1
-    }
-    else if (BMX_1_chip_id == BME280_BMP390_CHIP_ID) {
-      if (BMX_1_type == BMX_TYPE_BME280) {
-        p = bme1.readPressure()/100.0F;     // bp1 hPa
-        t = bme1.readTemperature();         // bt1
-        h = bme1.readHumidity();            // bh1 
-      }
-      if (BMX_1_type == BMX_TYPE_BMP390) {
-        p = bm31.readPressure()/100.0F;     // bp1 hPa
-        t = bm31.readTemperature();         // bt1 
-      }    
-    }
-    else { // BMP388
-      p = bm31.readPressure()/100.0F;       // bp1 hPa
-      t = bm31.readTemperature();           // bt1
-    }
-    bmx1_pressure = (isnan(p) || (p < QC_MIN_P)  || (p > QC_MAX_P))  ? QC_ERR_P  : p; // Used later for mslp calc
-    bmx1_temp     = (isnan(t) || (t < QC_MIN_T)  || (t > QC_MAX_T))  ? QC_ERR_T  : t;
-    bmx1_humid    = (isnan(h) || (h < QC_MIN_RH) || (h > QC_MAX_RH)) ? QC_ERR_RH : h;
+    bmx1_read(bmx1_pressure, bmx1_temp, bmx1_humid);
   }
 
   if (BMX_2_exists) {
-    float p = 0.0;
-    float t = 0.0;
-    float h = 0.0;
-
-    if (BMX_2_chip_id == BMP280_CHIP_ID) {
-      p = bmp2.readPressure()/100.0F;       // bp2 hPa
-      t = bmp2.readTemperature();           // bt2
-    }
-    else if (BMX_2_chip_id == BME280_BMP390_CHIP_ID) {
-      if (BMX_2_type == BMX_TYPE_BME280) {
-        p = bme2.readPressure()/100.0F;     // bp2 hPa
-        t = bme2.readTemperature();         // bt2
-        h = bme2.readHumidity();            // bh2 
-      }
-      if (BMX_2_type == BMX_TYPE_BMP390) {
-        p = bm32.readPressure()/100.0F;     // bp2 hPa
-        t = bm32.readTemperature();         // bt2       
-      }
-    }
-    else { // BMP388
-      p = bm32.readPressure()/100.0F;       // bp2 hPa
-      t = bm32.readTemperature();           // bt2
-    }
-    bmx2_pressure = (isnan(p) || (p < QC_MIN_P)  || (p > QC_MAX_P))  ? QC_ERR_P  : p;
-    bmx2_temp     = (isnan(t) || (t < QC_MIN_T)  || (t > QC_MAX_T))  ? QC_ERR_T  : t;
-    bmx2_humid    = (isnan(h) || (h < QC_MIN_RH) || (h > QC_MAX_RH)) ? QC_ERR_RH : h;
+    bmx2_read(bmx2_pressure, bmx2_temp, bmx2_humid);
   }
 
   if (HTU21DF_exists) {
@@ -174,30 +135,6 @@ void OBS_Do() {
 
     htu1_temp = htu.readTemperature();
     htu1_temp = (isnan(htu1_temp) || (htu1_temp < QC_MIN_T)  || (htu1_temp > QC_MAX_T))  ? QC_ERR_T  : htu1_temp;
-  }
-
-  if (SHT_1_exists) {
-    st1 = sht1.readTemperature();
-    st1 = (isnan(st1) || (st1 < QC_MIN_T)  || (st1 > QC_MAX_T))  ? QC_ERR_T  : st1; // Used later for mslp calc
-    sh1 = sht1.readHumidity();
-    sh1 = (isnan(sh1) || (sh1 < QC_MIN_RH) || (sh1 > QC_MAX_RH)) ? QC_ERR_RH : sh1; // Used later for mslp calc
-  }
-
-  if (SHT_2_exists) {
-    st2 = sht2.readTemperature();
-    st2 = (isnan(st2) || (st2 < QC_MIN_T)  || (st2 > QC_MAX_T))  ? QC_ERR_T  : st2;
-    sh2 = sht2.readHumidity();
-    sh2 = (isnan(sh2) || (sh2 < QC_MIN_RH) || (sh2 > QC_MAX_RH)) ? QC_ERR_RH : sh2;
-  }
-
-  if (HIH8_exists) {
-    bool status = hih8_getTempHumid(&ht2, &hh2);
-    if (!status) {
-      ht2 = -999.99;
-      hh2 = 0.0;
-    }
-    ht2 = (isnan(ht2) || (ht2 < QC_MIN_T)  || (ht2 > QC_MAX_T))  ? QC_ERR_T  : ht2;
-    hh2 = (isnan(hh2) || (hh2 < QC_MIN_RH) || (hh2 > QC_MAX_RH)) ? QC_ERR_RH : hh2;
   }
 
   if (SI1145_exists) {
@@ -249,14 +186,7 @@ void OBS_Do() {
     lux = (isnan(lux) || (lux < QC_MIN_VLX)  || (lux > QC_MAX_VLX))  ? QC_ERR_VLX  : lux;
   }
 
-  // Heat Index Temperature
-  if (HI_exists) {
-    heat_index = hi_calculate(st1, sh1);
-  } 
 
-  if (MSLP_exists) {
-    mslp = (float) mslp_calculate(st1, sh1, bmx1_pressure, cf_elevation);
-  }
 
   float SignalStrength = 0;
   int BatteryState = 0;
@@ -322,6 +252,9 @@ void OBS_Do() {
         writer.name("bh2").value(bmx2_humid, 2);
       }
     }
+
+    sensor_i2c_44_47_obs_do(writer);
+
     if (HTU21DF_exists) {
       writer.name("ht1").value(htu1_temp, 2);
       writer.name("hh1").value(htu1_humid, 2);
@@ -332,18 +265,6 @@ void OBS_Do() {
     if (MCP_2_exists) {
       writer.name("mt2").value(mcp2_temp, 2);
     }
-    if (SHT_1_exists) {
-      writer.name("st1").value(st1, 2);
-      writer.name("sh1").value(sh1, 2);
-    }
-    if (SHT_2_exists) {
-      writer.name("st2").value(st2, 2);
-      writer.name("sh2").value(sh2, 2);
-    }
-    if (HIH8_exists) {
-      writer.name("ht2").value(ht2, 2);
-      writer.name("hh2").value(ht2, 2);
-    }
     if (SI1145_exists) {
       writer.name("sv1").value(si_vis, 2);
       writer.name("si1").value(si_ir, 2);
@@ -352,11 +273,22 @@ void OBS_Do() {
     if (VEML7700_exists) {
       writer.name("vlx").value(lux, 2);
     }
-    if (HI_exists) {
+    if (HI_exists) { // Heat Index Temperature
+      heat_index = hi_calculate(sht1_temp, sht1_humid);
       writer.name("hi").value(heat_index, 2);
     } 
     if (MSLP_exists) {
+      float mslp = (float) mslp_calculate(sht1_temp, sht1_humid, bmx_1_pressure, cf_elevation);
       writer.name("mslp").value(mslp, 2);
+    }
+
+    if (OP2_State == OP2_STATE_RAW) {
+      writer.name("op2r").value(Pin_ReadAvg(OP2_PIN), 2); // OP2 Raw
+    }
+    else if (OP2_State == OP2_STATE_VOLTAIC) {
+      float vbv = VoltaicVoltage(OP2_PIN);
+      writer.name("vbv").value(vbv, 2);                   // OP2 Voltaic Battery Voltage
+      writer.name("vpc").value(VoltaicPercent(vbv), 2);   // OP2 Voltaic Battery Voltage
     }
 
     writer.name("bcs").value(BatteryState);
@@ -424,6 +356,9 @@ void OBS_Do() {
         writer.name("bt2").value(bmx2_temp, 4);
         writer.name("bh2").value(bmx2_humid, 4);
       }
+
+      sensor_i2c_44_47_obs_do(writer);
+
       if (HTU21DF_exists) {
         writer.name("ht1").value(htu1_temp, 2);
         writer.name("hh1").value(htu1_humid, 2);
@@ -434,18 +369,6 @@ void OBS_Do() {
       if (MCP_2_exists) {
         writer.name("mt2").value(mcp2_temp, 2);
       }
-      if (SHT_1_exists) {
-        writer.name("st1").value(st1, 2);
-        writer.name("sh1").value(sh1, 2);
-      }
-      if (SHT_2_exists) {
-        writer.name("st2").value(st2, 2);
-        writer.name("sh2").value(sh2, 2);
-      }
-      if (HIH8_exists) {
-        writer.name("ht2").value(ht2, 2);
-        writer.name("hh2").value(hh2, 2);
-      }
       if (SI1145_exists) {
         writer.name("sv1").value(si_vis, 2);
         writer.name("si1").value(si_ir, 2);
@@ -455,9 +378,11 @@ void OBS_Do() {
         writer.name("lx").value(lux, 2);
       }
       if (HI_exists) {
+        heat_index = hi_calculate(sht1_temp, sht1_humid);
         writer.name("hi").value(heat_index, 2);
       } 
       if (MSLP_exists) {
+        float mslp = (float) mslp_calculate(sht1_temp, sht1_humid, bmx_1_pressure, cf_elevation);
         writer.name("mslp").value(mslp, 2);
       }        
       writer.name("bcs").value(BatteryState);

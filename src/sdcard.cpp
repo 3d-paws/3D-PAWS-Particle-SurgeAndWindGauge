@@ -11,35 +11,30 @@
 #include "include/cf.h"
 #include "include/eeprom.h"
 #include "include/output.h"
-// #include "include/sensors.h"
+#include "include/obs.h"
 #include "include/sdcard.h"
-
-// Prototyping functions to aviod compile function unknown issue.
-bool Particle_Publish(char *EventName); 
-void OBS_Do();
 
 /*
  * ======================================================================================================================
  * Variables and Data Structures
  * =======================================================================================================================
  */
-SdFat SD;                               // File system object.
+SdFat SD;                                  // File system object.
 File SD_fp;
-char SD_obsdir[] = "/OBS";              // Store our obs in this directory. At Power on, it is created if does not exist
-bool SD_exists = false;                     // Set to true if SD card found at boot
-char SD_n2s_file[] = "N2SOBS.TXT";          // Need To Send Observation file
-uint32_t SD_n2s_max_filesz = 200 * 8 * 24;  // Keep a little over 2 days. When it fills, it is deleted and we start over.
+char SD_obsdir[] = "/OBS";                 // Store obs in this directory. At Power on, it is created if does not exist
+bool SD_exists = false;                    // Set to true if SD card found at boot
+char SD_n2s_file[] = "N2SOBS.TXT";         // Need To Send Observation file
+uint32_t SD_n2s_max_filesz = 200 * 8 * 24; // Keep a little over 2 days. When it fills, it is deleted and we start over.
 
-char SD_sim_file[] = "SIM.TXT";         // File used to set Ineternal or External sim configuration
-char SD_simold_file[] = "SIMOLD.TXT";   // SIM.TXT renamed to this after sim configuration set
-
-char SD_wifi_file[] = "WIFI.TXT";       // File used to set WiFi configuration
-
-char SD_INFO_FILE[] = "INFO.TXT";       // Store INFO information in this file. Every INFO call will overwrite content
-
-char SD_5M_DIST_FILE[] = "5MDIST.TXT";  // If file exists use adjustment of 1.25. No file, then 10m Sensor is 2.5
-
-char SD_ELEV_FILE[] = "ELEV.TXT";       // Set the station elevation for MSLP calculation            
+char SD_sim_file[]     = "SIM.TXT";    // File used to set Ineternal or External sim configuration
+char SD_simold_file[]  = "SIMOLD.TXT"; // SIM.TXT renamed to this after sim configuration set
+char SD_wifi_file[]    = "WIFI.TXT";   // File used to set WiFi configuration
+char SD_INFO_FILE[]    = "INFO.TXT";   // Store INFO information in this file. Every INFO call will overwrite content
+char SD_5M_DIST_FILE[] = "5MDIST.TXT"; // If file exists use adjustment of 1.25. No file, then 10m Sensor is 2.5
+char SD_NOWIND_FILE[]  = "NOWIND.TXT"; // File used to disable wind observations
+char SD_ELEV_FILE[]    = "ELEV.TXT";   // Set the station elevation for MSLP calculation            
+char SD_OP2_RAW_FILE[] = "OP2RAW.TXT"; // File used to set pin as generic analog device connected
+char SD_OP2_VBV_FILE[] = "OP2VBV.TXT"; // Voltaic battery voltage
 
 /*
  * ======================================================================================================================

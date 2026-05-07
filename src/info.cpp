@@ -10,6 +10,7 @@
 #include "include/ssbits.h"
 #include "include/eeprom.h"
 #include "include/cf.h"
+#include "include/sensors_i2c_44_47.h"
 #include "include/sensors.h"
 #include "include/wrda.h"
 #include "include/sdcard.h"
@@ -157,17 +158,32 @@ bool INFO_Do() {
   }
 #endif
 
+  // OP1 pin is set
+  if (dg_adjustment == 1.25) {
+    writer.name("op1").value("DIST 5M(a4)");
+  }
+  else {
+    writer.name("op1").value("DIST 10M(a4)");
+  }
+
+  // OP2 pin is set
+  if (OP2_State == OP2_STATE_RAW){
+    writer.name("op2").value("RAW");
+  }
+  else if (OP2_State == OP2_STATE_VOLTAIC){
+    writer.name("op2").value("VBV(A5)");
+  }
+  else {
+    writer.name("op2").value("NS(A5)"); // Not Set
+  }
+
   // Station Elevation
   writer.name("elev").value(cf_elevation);
 
-  if (dg_adjustment == 1.25) {
-    writer.name("a4").value("DIST 5M");
-  }
-  else {
-    writer.name("a4").value("DIST 10M");
-  }
+
 
   // Sensors
+  buf[0] = '\0';
   if (BMX_1_exists) {
     sprintf (buf+strlen(buf), "%sBMX1(%s)", comma, bmxtype[BMX_1_type]);
     comma=",";
@@ -176,24 +192,16 @@ bool INFO_Do() {
     sprintf (buf+strlen(buf), "%sBMX2(%s)", comma, bmxtype[BMX_2_type]);
     comma=",";
   }
+
+  // Add 0x44-)x47 sensors to the list
+  sensor_i2c_44_47_info(buf, 256, comma);
+
   if (MCP_1_exists) {
     sprintf (buf+strlen(buf), "%sMCP1", comma);
     comma=",";
   }
   if (MCP_2_exists) {
     sprintf (buf+strlen(buf), "%sMCP2", comma);
-    comma=",";
-  }
-  if (SHT_1_exists) {
-    sprintf (buf+strlen(buf), "%sSHT1", comma);
-    comma=",";
-  }
-  if (SHT_2_exists) {
-    sprintf (buf+strlen(buf), "%sSHT2", comma);
-    comma=",";
-  }
-  if (HIH8_exists) {
-    sprintf (buf+strlen(buf), "%sHIH8", comma);
     comma=",";
   }
   if (SI1145_exists) {
@@ -215,6 +223,11 @@ bool INFO_Do() {
   if (MSLP_exists) {
     sprintf (buf+strlen(buf), "%sMSLP", comma);
     comma=",";  
+  }
+  if (DoWind) { // Wind Sensor
+    GetPinName(ANEMOMETER_IRQ_PIN, Buffer32Bytes);
+    sprintf (buf+strlen(buf), "%sWS(%s)", comma, Buffer32Bytes);
+    comma=",";
   }
   writer.name("sensors").value(buf);
 

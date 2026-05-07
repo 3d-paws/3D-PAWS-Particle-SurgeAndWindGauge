@@ -48,23 +48,44 @@ typedef struct {
 } WIND_STR;
 
 /*
+ * ======================================================================================================================
+ *  Option Pin Defination Setup
+ * ======================================================================================================================
+ */
+#define OP1_PIN  A4
+#define OP2_PIN  A5
+
+/*
+ * ======================================================================================================================
+ *  Pin OP2 State Setup
+ * ======================================================================================================================
+ */
+#define OP2_STATE_NULL       0
+#define OP2_STATE_RAW        1
+#define OP2_STATE_VOLTAIC    2
+
+/*
  * =======================================================================================================================
  * Distance Gauge
  * =======================================================================================================================
  */
-#define DISTANCEGAUGE   A4
-#define DG_BUCKETS      91        // Observation Distance Buckets
+#define DISTANCEGAUGE   OP1_PIN
+#define DG_BUCKETS      181        // Observation Distance Buckets
 
 // Extern variables
 extern float dg_adjustment;
 extern volatile unsigned int anemometer_interrupt_count;
 extern uint64_t anemometer_interrupt_stime;
 
+extern bool DoWind;
 extern bool AS5600_exists;
 extern int AS5600_ADR;
 
+extern int OP2_State;
+
 // Function prototype
 void anemometer_interrupt_handler();
+void CheckNoWindFile();
 void as5600_initialize();
 float Wind_SampleSpeed();
 int Wind_SampleDirection();
@@ -74,11 +95,15 @@ float Wind_Gust();
 int Wind_GustDirection();
 void Wind_GustUpdate();
 void Wind_TakeReading();
-void Wind_Distance_Air_Initialize();
 
-int OBS_Distance_SimpleMedian();
-void OBS_Distance_Do();
-float OBS_Distance_Median();
-void OBS_Distance_Calc(float *m, float *d, int *o);
-void OBS_WindAndDistance_Fill();
+void OP2_Initialize();
+float Pin_ReadAvg(int pin);
+float VoltaicVoltage(int pin);
+float VoltaicPercent(float half_cell_voltage);
+
+int DistanceGauge_SimpleMedian();
+void DistanceGauge_TakeReading();
+float DistanceGauge_Median();
+void DistanceGauge_Calc(float *m, float *d, int *o);
+void WindAndDistance_Fill();
 

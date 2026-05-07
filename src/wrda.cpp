@@ -3,12 +3,15 @@
  *  wrda.cpp - Wind Rain Distance Air Functions
  * ======================================================================================================================
  */
+#include <Arduino.h>
+
 #include "include/ssbits.h"
 #include "include/cf.h"
 #include "include/output.h"
 #include "include/support.h"
 #include "include/sdcard.h"
 #include "include/sensors.h"
+#include "include/info.h"
 #include "include/main.h"
 #include "include/wrda.h"
 
@@ -22,7 +25,8 @@
  * ======================================================================================================================
  *  Wind Direction - AS5600 Sensor
  * ======================================================================================================================
- */    
+ */
+bool DoWind = true;  
 WIND_STR wind; 
 bool      AS5600_exists     = true; // if AS5600 wind direction is found, we then will do observations
 int       AS5600_ADR        = 0x36;
@@ -54,6 +58,27 @@ uint64_t anemometer_interrupt_stime;
 void anemometer_interrupt_handler()
 {
   anemometer_interrupt_count++;
+}
+
+/* 
+ * =======================================================================================================================
+ * CheckNoWindFile()
+ * =======================================================================================================================
+ */
+void CheckNoWindFile() {
+
+  if (SD_exists) {
+    if (SD.exists(SD_NOWIND_FILE)) {
+      Output ("WIND: Disabled");
+      DoWind=false;
+    }
+    else {
+      Output ("WIND: Enabled");
+    }
+  }
+  else {
+    Output("WIND: Enabled, SD NF"); 
+  }     
 }
 
 /* 
@@ -159,7 +184,7 @@ void Wind_TakeReading() {
   if (AS5600_exists) {
     wind.bucket[wind.bucket_idx].direction = (int) Wind_SampleDirection();
     wind.bucket[wind.bucket_idx].speed = Wind_SampleSpeed();
-    wind.bucket_idx = (++wind.bucket_idx) % WIND_READINGS; // Advance bucket index for next reading
+    wind.bucket_idx = (wind.bucket_idx+1) % WIND_READINGS; // Advance bucket index for next reading
   }
 }
 
@@ -328,7 +353,104 @@ void Wind_GustUpdate() {
   }
 }
 
+/*
+ * ======================================================================================================================
+ *  Pin OP2 State Setup
+ * ======================================================================================================================
+ */
+int OP2_State = OP2_STATE_NULL;                  // Default is not used
 
+/* 
+ *=======================================================================================================================
+ * OP2_Initialize()
+ *=======================================================================================================================
+ */
+void OP2_Initialize() {
+  Output ("OP2:INIT");
+  if (SD_exists) {
+    if (SD.exists(SD_OP2_RAW_FILE)) {
+      pinMode(OP2_PIN, INPUT);
+      Output ("OP2=RAW");
+      OP2_State = OP2_STATE_RAW;
+    }
+    else if (SD.exists(SD_OP2_VBV_FILE)) {
+      pinMode(OP2_PIN, INPUT);
+      Output ("OP2=VBV");
+      OP2_State = OP2_STATE_VOLTAIC;
+    }
+    else {
+      Output ("OP2=NULL");
+    }
+  }
+  else {
+    Output ("OP2=NULL,SD NF");
+  }
+}
+
+/* 
+ *=======================================================================================================================
+ * Pin_ReadAvg()
+ *=======================================================================================================================
+ */
+float Pin_ReadAvg(int pin) {
+  int numReadings = 5;
+  int totalValue = 0;
+  for (int i = 0; i < numReadings; i++) {
+    totalValue += analogRead(pin);
+    delay(10);  // Short delay between readings
+  }
+  return(totalValue / numReadings);
+}
+
+/* 
+ *=======================================================================================================================
+ * VoltaicVoltage() - Breakout the Voltaic Cell Voltage from the UCB-C 
+ * 
+ * Info: https://blog.voltaicsystems.com/reading-charge-level-of-voltaic-usb-battery-packs/ for  D+ 
+ * Info: https://blog.voltaicsystems.com/updated-usb-c-pd-and-always-on-for-v25-v50-v75-batteries/ for SBU
+ * 
+ * Newer V25/V50/V75 firmware (post-2023) moved this cell voltage signal to SBU pins (A8/B8) on USB-C for better USB 
+ * compliance. Older units used D+. Which conflicted with data transfer. 
+ * 
+ * Using both A8/B8 SBU pins ensures compatibility regardless of USB-C cable orientation (flipped or not)
+ * 
+ * Voltaic’s docs say the pack reports half the cell voltage.
+ * The expected voltage range on Voltaic V25's monitor pins (D+ on older firmware, 
+ *   SBU1 (A8) and SBU2 (B8) on newer) is 1.6V to 2.1V
+ *=======================================================================================================================
+ */
+float VoltaicVoltage(int pin) {
+  int numReadings = 5;
+  int totalValue = 0;
+  for (int i = 0; i < numReadings; i++) {
+    totalValue += analogRead(pin);
+    delay(10);  // Short delay between readings
+  }
+  float voltage = (3.3 * (totalValue / (float)numReadings)) / 4095.0; 
+  return(voltage);
+}
+
+/*
+ *=======================================================================================================================
+ * VoltaicPercent() - Voltaic Cell Percent Charge
+ *   Full charge: 4.2V cell → 2.1V on SBU (100%)  
+ *   75% charge:  ~3.9V cell → ~1.95V on SBU  
+ *   50% charge:  ~3.7V cell → ~1.85V on SBU  
+ *   25% charge:  ~3.4V cell → ~1.7V on SBU  
+ *   Empty:       3.2V cell → 1.6V on SBU (0%)
+ *=======================================================================================================================
+ */
+float VoltaicPercent(float half_cell_voltage) {
+  float cellV = half_cell_voltage * 2.0;
+  
+  if (cellV >= 4.20) return 100.0;
+  if (cellV <= 3.20) return 0.0;
+  
+  // Simple linear approximation over Voltaic's specified 3.2-4.2V range
+  // (Li-ion curve is flat in middle, so voltage alone is rough anyway)
+  float percent = ((cellV - 3.20) / (4.20 - 3.20)) * 100.0;
+  return constrain(percent, 0, 100);
+}
 
  /*
  * =======================================================================================================================
@@ -340,13 +462,12 @@ unsigned int dg_bucket = 0;
 unsigned int dg_buckets[DG_BUCKETS];
 unsigned int dg_buckets_median[DG_BUCKETS]; // dg_buckets will get copy to this, then we will sort for median
 
-
 /* 
  *=======================================================================================================================
- * OBS_Distance_SimpleMedian()
+ * DistanceGauge_SimpleMedian()
  *=======================================================================================================================
  */
-int OBS_Distance_SimpleMedian() {
+int DistanceGauge_SimpleMedian() {
   unsigned int bucket[5];
 
   bucket[0] = (int) analogRead(DISTANCEGAUGE);
@@ -365,21 +486,20 @@ int OBS_Distance_SimpleMedian() {
 
 /* 
  *=======================================================================================================================
- * OBS_Distance_Do()
+ * DistanceGauge_TakeReading()
  *=======================================================================================================================
  */
-void OBS_Distance_Do() {
-  dg_buckets[dg_bucket] = OBS_Distance_SimpleMedian(); // median value 
+void DistanceGauge_TakeReading() {
+  dg_buckets[dg_bucket] = DistanceGauge_SimpleMedian(); // median value 
   dg_bucket = (dg_bucket+1) % DG_BUCKETS;
 }
 
-
 /* 
  *=======================================================================================================================
- * OBS_Distance_Median() - return median from the last 91 observations
+ * DistanceGauge_Median() - return median from the last 91 observations
  *=======================================================================================================================
  */
-float OBS_Distance_Median() {
+float DistanceGauge_Median() {
 
   // Make a copy so we can do a sort
   for (int b=0; b<DG_BUCKETS; b++) {
@@ -394,9 +514,9 @@ float OBS_Distance_Median() {
 
 /* 
  *=======================================================================================================================
- * OBS_Distance_Calc()
+ * DistanceGauge_Calc()
  * 
- *   91 one-second water level samples centered on each tenth of an hour are averaged, a three standard deviation 
+ *   181 one-second water level samples centered on each tenth of an hour are averaged, a three standard deviation 
  *   outlier rejection test applied, the mean and standard deviation are recalculated and reported along with 
  *   the number of outliers. (3 minute water level average).
  * 
@@ -417,7 +537,7 @@ float OBS_Distance_Median() {
  *   4 Subtract the product in step 3 from the mean
  *=======================================================================================================================
  */
-void OBS_Distance_Calc(float *m, float *d, int *o) {  // (mean, stdev, outliers)
+void DistanceGauge_Calc(float *m, float *d, int *o) {  // (mean, stdev, outliers)
   float mean=0.0;
   float mean_minus_outliers=0.0;
   float sqDevSum=0.0;
@@ -471,15 +591,13 @@ void OBS_Distance_Calc(float *m, float *d, int *o) {  // (mean, stdev, outliers)
   // Output(Buffer32Bytes);
 }
 
-
 /* 
  *=======================================================================================================================
- * OBS_WindAndDistance_Fill()
+ * WindAndDistance_Fill()
  *=======================================================================================================================
  */
-void OBS_WindAndDistance_Fill() {
-  float distance;
-
+void WindAndDistance_Fill() {
+  int prev_idx;
   Output("Wind&Distance Fill");
 
   // Clear windspeed counter  
@@ -490,6 +608,7 @@ void OBS_WindAndDistance_Fill() {
   wind.gust = 0.0;
   wind.gust_direction = -1;
   wind.bucket_idx = 0;
+  dg_bucket=0;
   
   for (int i=0; i<WIND_READINGS; i++) {
     wind.bucket[i].direction = (int) -999;
@@ -497,20 +616,21 @@ void OBS_WindAndDistance_Fill() {
   }
 
   for (int i=0; i<DG_BUCKETS; i++) {
-    dg_buckets[dg_bucket] = OBS_Distance_SimpleMedian();
-    distance = dg_buckets[dg_bucket] * dg_adjustment; // Pins are 12bit resolution 
+    BackGroundWork(); // Does Wind, Distance, Heartbeat and will provide a 1s delay
 
-    sprintf (Buffer32Bytes, "%d D:%d.%02d", i, (int)distance, (int)(distance*100)%100);
-    if (AS5600_exists) {
-      Wind_TakeReading();
-      float ws = Wind_SpeedAverage();
-      sprintf (Buffer32Bytes+strlen(Buffer32Bytes), " WD:%3d WS:%d.%02d", 
-        Wind_SampleDirection(), (int)ws, (int)(ws*100)%100);
+    prev_idx = (dg_bucket + DG_BUCKETS - 1) % DG_BUCKETS;
+
+    sprintf (msgbuf, "%d D:%.2f", i, (dg_buckets[prev_idx] * dg_adjustment));
+    if (DoWind) {
+      prev_idx = (wind.bucket_idx + WIND_READINGS - 1) % WIND_READINGS;
+      sprintf (msgbuf+strlen(msgbuf), " WD:%3d WS:%.2f", 
+        wind.bucket[prev_idx].direction, wind.bucket[prev_idx].speed);
     }
-    Output(Buffer32Bytes);
-    dg_bucket = (++dg_bucket) % DG_BUCKETS;
+    Output(msgbuf);
 
-    HeartBeat();  // Provides a 250ms delay
-    delay (740);  // Substract a little time from 750 for loop execution (This is a guess)
+    // At startp SendSystemInformation is set and when we connect to particle we send info.
+    if (SendSystemInformation && Particle.connected()) {
+      INFO_Do(); // Function sets SendSystemInformation back to false.
+    }
   }
 }

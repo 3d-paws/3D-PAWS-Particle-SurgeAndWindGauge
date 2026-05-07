@@ -11,7 +11,6 @@
 #include "include/main.h"
 #include "include/time.h"
 
-
 /*
  * ======================================================================================================================
  * Variables and Data Structures

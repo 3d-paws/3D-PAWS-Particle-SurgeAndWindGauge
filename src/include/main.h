@@ -42,3 +42,4 @@ extern PMIC pmic; // Power Management IC (bq24195) I2C 0x6B
 
 // Function prototypes
 void HeartBeat();
+void BackGroundWork();

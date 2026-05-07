@@ -1,3 +1,15 @@
+/******************************************************/
+//       THIS IS A GENERATED FILE - DO NOT EDIT       //
+/******************************************************/
+
+#include "Particle.h"
+#line 1 "/Users/rjbubon/Documents/Particle/3D-PAWS-Particle-SurgeAndWindGauge/src/sswg.ino"
+void HeartBeat();
+void BackGroundWork();
+bool OBS_TimeCheck();
+void setup();
+void loop();
+#line 1 "/Users/rjbubon/Documents/Particle/3D-PAWS-Particle-SurgeAndWindGauge/src/sswg.ino"
 PRODUCT_VERSION(11);
 #define COPYRIGHT "Copyright [2025] [University Corporation for Atmospheric Research]"
 #define VERSION_INFO "SSWG-20260507v11"

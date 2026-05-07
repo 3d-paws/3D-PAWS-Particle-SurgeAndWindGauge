@@ -134,12 +134,12 @@ void mysort(unsigned int a[], unsigned int n) {
  * =======================================================================================================================
  */
 bool isnumeric(char *s) {
-  for (int i=0; i< strlen(s); i++) {
-    if (!isdigit(*(s+i)) ) {
-      return(false);
-    }
+  if (!s || !*s) return false;  // Reject null/empty
+  size_t len = strlen(s);
+  for (size_t i = 0; i < len; i++) {
+    if (!isdigit(s[i])) return false;
   }
-  return(true);
+  return true;
 }
 
 /*

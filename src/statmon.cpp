@@ -7,6 +7,7 @@
 #include <RTClib.h>
 
 #include "include/ssbits.h"
+#include "include/sensors_i2c_44_47.h"
 #include "include/sensors.h"
 #include "include/wrda.h"
 #include "include/cf.h"
@@ -59,7 +60,7 @@ void StationMonitor() {
   // =================================================================
   memset(msgbuf, 0, sizeof(msgbuf));
 
-  float distance = OBS_Distance_SimpleMedian() * dg_adjustment; // Pins are 12bit resolution 
+  float distance = DistanceGauge_SimpleMedian() * dg_adjustment; // Pins are 12bit resolution 
 
   sprintf (msgbuf+strlen(msgbuf), "DM:%d.%02d DR:%d %s", 
     (int)distance, (int)(distance*100)%100, (int) analogRead(DISTANCEGAUGE),
@@ -92,82 +93,20 @@ void StationMonitor() {
   // =================================================================
   if (cycle == 0) {
     if (BMX_1_exists) {
-      float bmx_pressure = 0.0;
-      float bmx_temp = 0.0;
-      float bmx_humid = 0.0;
-      
-      switch (BMX_1_chip_id) {
-        case BMP280_CHIP_ID :
-          bmx_pressure = bmp1.readPressure()/100.0F;           // bmxp1
-          bmx_temp = bmp1.readTemperature();                   // bmxt1
-          break;
-        
-        case BME280_BMP390_CHIP_ID :
-          if (BMX_1_chip_id == BME280_BMP390_CHIP_ID) {
-            bmx_pressure = bme1.readPressure()/100.0F;           // bmxp1
-            bmx_temp = bme1.readTemperature();                   // bmxt1
-            bmx_humid = bme1.readHumidity();                     // bmxh1 
-          }
-          else { // BMP390
-            bmx_pressure = bm31.readPressure()/100.0F;
-            bmx_temp = bm31.readTemperature();
-          }
-          break;
-          
-        case BMP388_CHIP_ID :
-          bmx_pressure = bm31.readPressure()/100.0F;
-          bmx_temp = bm31.readTemperature();
-          break;
-        
-        default: // WTF
-          break;
-      }
-      sprintf (msgbuf, "B1 %d.%02d %d.%02d %d.%02d", 
-        (int)bmx_pressure, (int)(bmx_pressure*100)%100,
-        (int)bmx_temp, (int)(bmx_temp*100)%100,
-        (int)bmx_humid, (int)(bmx_humid*100)%100);
+      float p,t,h;
+      bmx1_read(p, t, h);
+      sprintf (msgbuf, "B1 %.2f %.2f %.2f", p,t,h);
     }
     else {
       sprintf (msgbuf, "B1 NF");
     }
   }
-  
+
   if (cycle == 1) {
     if (BMX_2_exists) {
-      float bmx_pressure = 0.0;
-      float bmx_temp = 0.0;
-      float bmx_humid = 0.0;
-      
-      switch (BMX_2_chip_id) {
-        case BMP280_CHIP_ID :
-          bmx_pressure = bmp2.readPressure()/100.0F;           // bmxp1
-          bmx_temp = bmp1.readTemperature();                   // bmxt1
-          break;
-        
-        case BME280_BMP390_CHIP_ID :
-          if (BMX_2_chip_id == BME280_BMP390_CHIP_ID) {
-            bmx_pressure = bme2.readPressure()/100.0F;           // bmxp1
-            bmx_temp = bme1.readTemperature();                   // bmxt1
-            bmx_humid = bme1.readHumidity();                     // bmxh1 
-          }
-          else { // BMP390
-            bmx_pressure = bm32.readPressure()/100.0F;
-            bmx_temp = bm31.readTemperature();
-          }
-          break;
-          
-        case BMP388_CHIP_ID :
-          bmx_pressure = bm32.readPressure()/100.0F;
-          bmx_temp = bm31.readTemperature();
-          break;
-        
-        default: // WTF
-          break;
-      }
-      sprintf (msgbuf, "B2 %d.%02d %d.%02d %d.%02d", 
-        (int)bmx_pressure, (int)(bmx_pressure*100)%100,
-        (int)bmx_temp, (int)(bmx_temp*100)%100,
-        (int)bmx_humid, (int)(bmx_humid*100)%100);
+      float p,t,h;
+      bmx2_read(p, t, h);
+      sprintf (msgbuf, "B2 %.2f %.2f %.2f", p,t,h);
     }
     else {
       sprintf (msgbuf, "B2 NF");
@@ -196,7 +135,24 @@ void StationMonitor() {
     }
   }
 
-  if (cycle == 4) {   
+  if (cycle == 4) {
+   sensor_i2c_44_47_statmon(0, Buffer32Bytes);
+   sprintf (msgbuf, "%s", Buffer32Bytes);
+  }
+  if (cycle == 5) {
+   sensor_i2c_44_47_statmon(1, Buffer32Bytes);
+   sprintf (msgbuf, "%s", Buffer32Bytes);
+  }
+  if (cycle == 6) {
+   sensor_i2c_44_47_statmon(2, Buffer32Bytes);
+   sprintf (msgbuf, "%s", Buffer32Bytes);
+  }
+  if (cycle == 7) {
+   sensor_i2c_44_47_statmon(3, Buffer32Bytes);
+   sprintf (msgbuf, "%s", Buffer32Bytes);
+  }
+
+  if (cycle == 8) {   
     if (HTU21DF_exists) {
       float htu_humid = htu.readHumidity();
       float htu_temp = htu.readTemperature();
@@ -210,7 +166,7 @@ void StationMonitor() {
     } 
   }
 
-  if (cycle == 5) {   
+  if (cycle == 9) {   
     if (VEML7700_exists) {
       float lux = veml.readLux(VEML_LUX_AUTO);
       lux = (isnan(lux)) ? 0.0 : lux;
@@ -221,51 +177,7 @@ void StationMonitor() {
     }
   }
 
-  if (cycle == 6) {
-    if (SHT_1_exists) {
-      float t = sht1.readTemperature();
-      float h = sht1.readHumidity();
-      sprintf (msgbuf, "SHT1 T:%d.%02d H:%d.%02d", 
-         (int)t, (int)(t*100)%100,
-         (int)h, (int)(h*100)%100);
-    }
-    else {
-      sprintf (msgbuf, "SHT1 NF");
-    }
-  }
-
-  if (cycle == 7) {
-    if (SHT_2_exists) {
-      float t = sht2.readTemperature();
-      float h = sht2.readHumidity();
-      sprintf (msgbuf, "SHT2 T:%d.%02d H:%d.%02d", 
-         (int)t, (int)(t*100)%100,
-         (int)h, (int)(h*100)%100);
-    }
-    else {
-      sprintf (msgbuf, "SHT2 NF");
-    }      
-  }
-
-  if (cycle == 8) {   
-    if (HIH8_exists) {
-      float t = 0.0;
-      float h = 0.0;
-      bool status = hih8_getTempHumid(&t, &h);
-      if (!status) {
-        t = -999.99;
-        h = 0.0;
-      }
-      sprintf (msgbuf, "HIH8 T%d.%02d H%d.%02d", 
-         (int)t, (int)(t*100)%100,
-         (int)h, (int)(h*100)%100);
-    }
-    else {
-      sprintf (msgbuf, "HIH8 NF");
-    }
-  }
-
-  if (cycle == 9) {
+  if (cycle == 10) {
     if (SI1145_exists) {
       float si_vis = uv.readVisible();
       float si_ir = uv.readIR();
@@ -280,7 +192,7 @@ void StationMonitor() {
     }
   }
 
-  if (cycle == 10) {
+  if (cycle == 11) {
     memset(msgbuf, 0, sizeof(msgbuf));
 
 #if PLATFORM_ID == PLATFORM_ARGON
@@ -302,7 +214,7 @@ void StationMonitor() {
 
   // Give the use some time to read line 3 before changing
   if (count++ >= 5) {
-    cycle = (cycle+1) % 11;
+    cycle = (cycle+1) % 12; // << +1
     count = 0;
   }
   

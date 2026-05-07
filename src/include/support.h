@@ -5,9 +5,6 @@
  */
 #include <Particle.h>
 
-// Extern variables
-extern int LED_PIN;
-
 // Function prototypes
 bool I2C_Device_Exist(byte address);
 void Blink(int count, int between);

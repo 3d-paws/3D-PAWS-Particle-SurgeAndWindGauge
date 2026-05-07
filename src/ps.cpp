@@ -254,7 +254,8 @@ int Function_DoAction(String s) {
     }
     return(0);
   }
-  else if (s.indexOf("SETELEV:" == 0)) { // Pattern start of string aka 0 offset
+
+  else if (s.startsWith("SETELEV:")) { // Pattern start of string aka 0 offset
     Output("DoAction:SETELEV");
     String rest = s.substring(8);   // get part after "SETELEV:", 8 = length of 
     long elevation = rest.toInt();  // convert to integer
@@ -287,6 +288,180 @@ int Function_DoAction(String s) {
       return(-2);           
     }
     return(0);
+  }
+
+  else if (s.equals("NOWIND")) { 
+    Output("DoAction:NOWIND");
+    DoWind=false;
+    if (SD_exists) {
+      if (SD.exists(SD_NOWIND_FILE)) {
+        Output ("NOWIND EXISTS");
+      }
+      else {
+        // Touch File
+        File fp = SD.open(SD_NOWIND_FILE, FILE_WRITE);
+        if (fp) {
+          fp.close();
+          Output ("NOWIND SET");
+        }
+        else {
+          Output ("NOWIND OPEN ERR");
+          return(-3);
+        }
+      }
+    }
+    else {
+      Output("DOWIND, SD NF"); 
+      return(-1);      
+    }
+    return(0);  
+  }
+
+  else if (s.equals("DOWIND")) {
+    Output("DoAction:DOWIND");
+    DoWind=true;
+    if (SD_exists) {
+      if (SD.exists(SD_NOWIND_FILE)) {
+        if (SD.remove (SD_NOWIND_FILE)) {
+          Output ("NOWIND DEL OK");
+        }
+        else {
+          Output ("NOWIND DEL ERR");
+          return(-2);
+        }
+      }
+    }
+    else {
+      Output("DOWIND, SD NF"); 
+      return(-1);      
+    }
+    return(0);  
+  }
+
+  else if (s.equals("OP2RAW")) { // Set OP2 State File to Raw
+    Output("DoAction:OP2RAW");
+    // Add OP2 Raw configuration
+    if (SD_exists) {
+      if (SD.exists(SD_OP2_RAW_FILE)) {
+        Output ("OP2=RAW, ALREADY EXISTS");    
+      }
+      else {
+        // Touch File
+        File fp = SD.open(SD_OP2_RAW_FILE, FILE_WRITE);
+        if (fp) {
+          fp.close();
+          OP2_State = OP2_STATE_RAW;
+          Output ("OP2=RAW, SET");
+          pinMode(OP2_PIN, INPUT);
+        }
+        else {
+          Output ("OP2=RAW, OPEN ERR");
+          return(-2);
+        }
+      }
+
+      if (SD.exists(SD_OP2_VBV_FILE)) {
+        if (SD.remove (SD_OP2_VBV_FILE)) {
+          Output ("OP2=CLR, DEL VBV:OK");
+        }
+        else {
+          Output ("OP2=CLR, DEL VBV:ERR");
+          return(-3);
+        }
+      }
+      else {
+        Output ("OP2=CLR, DEL OP2VBV:NF");
+      }
+    }  
+    else {
+      Output("OP2=RAW, SD NF"); 
+      return(-1);      
+    }
+    return(0);
+  }
+  else if (s.equals("OP2VBV")) { // Set OP2 State File to Voltaic Battery Voltage
+    Output("DoAction:OP2VBV");
+    // Add OP2 Raw configuration
+    if (SD_exists) {
+      if (SD.exists(SD_OP2_VBV_FILE)) {
+        Output ("OP2=VNV, ALREADY EXISTS");    
+      }
+      else {
+
+        // Touch File
+        File fp = SD.open(SD_OP2_VBV_FILE, FILE_WRITE);
+        if (fp) {
+          fp.close();
+          OP2_State = OP2_STATE_VOLTAIC;
+          Output ("OP2=VBV, SET");
+          pinMode(OP2_PIN, INPUT);
+        }
+        else {
+          Output ("OP2=VBV, OPEN ERR");
+          return(-2);
+        }
+      }
+
+      if (SD.exists(SD_OP2_RAW_FILE)) {
+        if (SD.remove (SD_OP2_RAW_FILE)) {
+          Output ("OP2=CLR, DEL RAW:OK");
+        }
+        else {
+          Output ("OP2=CLR, DEL RAW:ERR");
+          return(-3);
+        }
+      }
+      else {
+        Output ("OP2=CLR, DEL OP2RAW:NF");
+      }
+
+    }
+    else {
+      Output("OP2=VBV, SD NF"); 
+      return(-1);      
+    }
+    return(0);
+  }
+    
+  else if (s.equals("OP2CLR")) { // Clear OP2 State Files
+    int state=0;
+    Output("DoAction:OP2CLR");
+    if (SD_exists) {
+
+      if (SD.exists(SD_OP2_RAW_FILE)) {
+        if (SD.remove (SD_OP2_RAW_FILE)) {
+          OP2_State = OP2_STATE_NULL;
+          Output ("OP2=CLR, DEL RAW:OK");
+        }
+        else {
+          Output ("OP2=CLR, DEL RAW:ERR");
+          state=-2;
+        }
+      }
+      else {
+        Output ("OP2=CLR, DEL OP2RAW:NF");
+      }
+
+      if (SD.exists(SD_OP2_VBV_FILE)) {
+        if (SD.remove (SD_OP2_VBV_FILE)) {
+          OP2_State = OP2_STATE_NULL;
+          Output ("OP2=CLR, DEL VBV:OK");
+        }
+        else {
+          Output ("OP2=CLR, DEL VBV:ERR");
+          state=-2;
+        }
+      }
+      else {
+        Output ("OP2=CLR, DEL OP2VBV:NF");
+      }
+
+    }
+    else {
+      Output("OP2=CLR, SD NF"); 
+      state=-1;     
+    }
+    return(state);
   }
 
   else {
@@ -576,7 +751,7 @@ void SimChangeCheck() {
 
           // At this point we have encountered EOF, CR, or LF
           // Now we need to terminate array with a null to make it a string
-          buf[i] = NULL;
+          buf[i] = '\0';
 
           // Parse string for the following
           //   INTERNAL
