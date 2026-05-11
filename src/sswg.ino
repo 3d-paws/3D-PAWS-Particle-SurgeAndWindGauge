@@ -1,6 +1,6 @@
-PRODUCT_VERSION(11);
+PRODUCT_VERSION(13);
 #define COPYRIGHT "Copyright [2025] [University Corporation for Atmospheric Research]"
-#define VERSION_INFO "SSWG-20260507v11"
+#define VERSION_INFO "SSWG-20260511v13"
 
 /*
  *======================================================================================================================
@@ -89,15 +89,17 @@ PRODUCT_VERSION(11);
  *                         See ReleaseNotes.txt file
  *                         Updated to ParticleOS 6.3.4
  * 
- *          Version 11 Released on 2026-05-07
- *          2026-05-04 RJB Updated to ParticleOS 6.4.1
+ *          Version 11 & 12 Released on 2026-05-07 - Skipped had a bug in as5600 being set true by default
+ * 
+ *          Version 13 Released on 2026-05-11
+ *          2026-05-11 RJB Updated to ParticleOS 6.4.1
  *                         Added DoAction NOWIND (Default) & DOWIND
  *                         Now following the NOAA standard for Distance of 181s
  *                         OP1 will always be Distance. OP2 = OP2RAW | OP2VBV (Voltaic) | OP2CLR
  *                         Added BMP581 and SHT45 sensor support
  *                         Updated the handling of the BMx sensors.
  *                         Removed support for HIH sensor
- *                         Bug Fix SETELEV 
+ *                         Bug Fix SETELEV
  *                                   
  *  https://tidesandcurrents.noaa.gov/publications/CO-OPS_Measurement_Spec.pdf
  *  Air acoustic sensor mounted in protective well
@@ -474,6 +476,7 @@ void setup() {
   }
 
   OP2_Initialize(); // Check for files to determine OP2 Pin Configuration (Raw, Voltaic Voltage)
+  
 
   CheckNoWindFile(); // if NOWIND.TXT found then DoWind is set false
   if (DoWind) {
@@ -482,9 +485,9 @@ void setup() {
     anemometer_interrupt_count = 0;
     anemometer_interrupt_stime = System.millis();
     attachInterrupt(ANEMOMETER_IRQ_PIN, anemometer_interrupt_handler, FALLING);
-
-    as5600_initialize();
   }
+
+  as5600_initialize(); // Still check for this sensor even if we have NOWIND set.
 
   // Derived Observations
   hi_initialize();

@@ -28,7 +28,7 @@
  */
 bool DoWind = true;  
 WIND_STR wind; 
-bool      AS5600_exists     = true; // if AS5600 wind direction is found, we then will do observations
+bool      AS5600_exists     = false;
 int       AS5600_ADR        = 0x36;
 const int AS5600_raw_ang_hi = 0x0c;
 const int AS5600_raw_ang_lo = 0x0d;
@@ -95,6 +95,7 @@ void as5600_initialize() {
   }
   else {
     msgp = (char *) "WD:OK";
+    AS5600_exists = true;
   }
   Output (msgp);
 }

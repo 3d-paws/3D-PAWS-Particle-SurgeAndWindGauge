@@ -212,6 +212,11 @@ bool INFO_Do() {
     sprintf (buf+strlen(buf), "%sVEML", comma);
     comma=",";
   }
+  if (DoWind) { // Wind Sensor
+    GetPinName(ANEMOMETER_IRQ_PIN, Buffer32Bytes);
+    sprintf (buf+strlen(buf), "%sWS(%s)", comma, Buffer32Bytes);
+    comma=",";
+  }
   if (AS5600_exists) {
     sprintf (buf+strlen(buf), "%sAS5600", comma);
     comma=",";
@@ -223,11 +228,6 @@ bool INFO_Do() {
   if (MSLP_exists) {
     sprintf (buf+strlen(buf), "%sMSLP", comma);
     comma=",";  
-  }
-  if (DoWind) { // Wind Sensor
-    GetPinName(ANEMOMETER_IRQ_PIN, Buffer32Bytes);
-    sprintf (buf+strlen(buf), "%sWS(%s)", comma, Buffer32Bytes);
-    comma=",";
   }
   writer.name("sensors").value(buf);
 
